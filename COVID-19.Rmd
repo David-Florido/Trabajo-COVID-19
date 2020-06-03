@@ -10,14 +10,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Cargamos librerías a utilizar
-```{r, message=FALSE}
-library(dplyr)  #Manejo de datos
+```{r message=FALSE}
+library(tidyverse)
 library(lubridate)  #Trabajo con fechas
 library(scales) #Formatos
 library(ggplot2)  #Hacer gráficas
 library(gridExtra)  #Agrupar gráficas
 ```
 
+## Visualización
 
 Cargamos el dataset con los datos y observamos sus datos
 ```{r}
@@ -145,3 +146,57 @@ pie <- ggplot(casos_internacionales, aes(x="", y=casos, fill=continente))+
 
 grid.arrange(pAf, pAm, pAs, pEu, pOc, pie, nrow=3, ncol = 2)
 ```
+
+
+## Formal Context Annalysis
+
+Cargamos la librería y dataset a usar
+```{r message=FALSE}
+library(arules)
+casos_sintomas <- read.csv("D:/Dave/UMA/Working on it/LCC/COVID/novel-corona-virus-2019-dataset/COVID19_line_list_data.csv")
+```
+
+
+"Limpiamos" el dataset y lo preparamos para poder sacar las reglas que nos interesan, en este caso queremos encontrar posibles relaciones entre sexo, edad y síntomas para hacer una previsión de la recuperación del paciente.
+```{r warning=FALSE}
+casos_sintomas <- casos_sintomas %>%
+  filter(!(death==0 & recovered==0)) %>%
+  select(c(gender, age, symptom, recovered)) %>%
+  drop_na() %>%
+  mutate(recovered = factor(ifelse(recovered == 0, 0, 1))) %>%
+  mutate(symptom = factor(ifelse(symptom == "", NA, symptom))) %>%
+  separate(
+    symptom,
+    into = c("symptom1","symptom2","symptom3"),
+    sep = ",",
+    remove = TRUE,
+    convert = FALSE
+  )
+
+casos_sintomas$gender <- as.factor(casos_sintomas$gender)
+casos_sintomas$age <- discretize(casos_sintomas$age, method = "interval", breaks = 4, dig.lab = 0, ordered_result = TRUE)
+casos_sintomas$symptom1 <- as.factor(casos_sintomas$symptom1)
+casos_sintomas$symptom2 <- as.factor(casos_sintomas$symptom2)
+casos_sintomas$symptom3 <- as.factor(casos_sintomas$symptom3)
+casos_sintomas$recovered <- as.factor(casos_sintomas$recovered)
+str(casos_sintomas)
+```
+
+
+```{r}
+reglas <- apriori(casos_sintomas,
+                  parameter = list(supp=0.1,conf=0.8, minlen=2, target="rules"),
+                  #minlen = 2 para que lhs no sea vacio
+                  appearance = list(rhs=c("recovered=0","recovered=1"))) #Reglas para ver recuperación
+
+reglas.pruned <- reglas[!is.redundant(reglas)] #Eliminamos reglas redundantes
+inspect(reglas.pruned)
+```
+
+```{r eval=FALSE}
+"Por desgracia el dataset del que dispongo tiene muy pocas filas con los datos que permiten realizar el análisis (apenas 201) así que su utilidad es prácticamente nula, sin embargo sí que podemos observar cómo entre las normas lo más posible es que las personas jóvenes se recuperen y a partir de los 67 años sea menos probable (los estudios que he observado advierten de su riesgo a partir de los 65). De acuerdo a las reglas sacadas parecería que el sexo femenino goza de una mayor resistencia a la enfermedad."
+```
+
+
+## Regresión
+

@@ -1,4 +1,4 @@
-library(dplyr)
+library(tidyverse)
 library(ggplot2)
 library(lubridate)  #Trabajo con fechas
 library(scales) #Formato
@@ -133,4 +133,47 @@ pie <- ggplot(casos_internacionales, aes(x="", y=casos, fill=continente))+
 
 
 grid.arrange(pAf, pAm, pAs, pEu, pOc, pie, nrow=3, ncol = 2)
+
+
+
+############################################################################
+############################################################################
+############################################################################
+
+library(arules)
+
+casos_sintomas <- read.csv("D:/Dave/UMA/Working on it/LCC/COVID/novel-corona-virus-2019-dataset/COVID19_line_list_data.csv")
+
+
+casos_sintomas <- casos_sintomas %>%
+  filter(!(death==0 & recovered==0)) %>%
+  select(c(gender, age, symptom, recovered)) %>%
+  drop_na() %>%
+  mutate(recovered = factor(ifelse(recovered == 0, 0, 1))) %>%
+  mutate(symptom = factor(ifelse(symptom == "", NA, symptom))) %>%
+  separate(
+    symptom,
+    into = c("symptom1","symptom2","symptom3"),
+    sep = ",",
+    remove = TRUE,
+    convert = FALSE
+  )
+
+casos_sintomas$gender <- as.factor(casos_sintomas$gender)
+casos_sintomas$age <- discretize(casos_sintomas$age, method = "interval", breaks = 4, dig.lab = 0, ordered_result = TRUE)
+casos_sintomas$symptom1 <- as.factor(casos_sintomas$symptom1)
+casos_sintomas$symptom2 <- as.factor(casos_sintomas$symptom2)
+casos_sintomas$symptom3 <- as.factor(casos_sintomas$symptom3)
+casos_sintomas$recovered <- as.factor(casos_sintomas$recovered)
+str(casos_sintomas)
+
+  
+
+reglas <- apriori(casos_sintomas,
+                  parameter = list(supp=0.1,conf=0.8, minlen=2, target="rules"),#minlen = 2 para que lhs no sea vacio
+                  appearance = list(rhs=c("recovered=0","recovered=1")))#reglas para ver recuperación
+inspect(reglas)
+reglas.pruned <- reglas[!is.redundant(reglas)]
+
+inspect(reglas.pruned)
 
