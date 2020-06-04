@@ -177,3 +177,51 @@ reglas.pruned <- reglas[!is.redundant(reglas)]
 
 inspect(reglas.pruned)
 
+
+
+############################################################################
+############################################################################
+############################################################################
+
+
+casos_internacionales <- read.csv("D:/Dave/UMA/Working on it/LCC/COVID/datasets/worldwide_cases")
+
+casos_internacionales <- casos_internacionales %>% 
+  select(-c(day, month, year, geoId, countryterritoryCode))
+
+names(casos_internacionales) <- c("fecha", "casos", "muertes", "pais", "poblacion", "continente")
+
+casos_internacionales <- casos_internacionales %>% filter(casos > 0)
+
+casos_internacionales$fecha <- casos_internacionales$fecha %>%
+  as.Date(format = "%d/%m/%Y") 
+
+casos_internacionales <- casos_internacionales %>%  arrange(fecha)
+
+casos_internacionales <- casos_internacionales %>%
+  mutate(pais = ifelse(continente == "Other", "Japan", pais), 
+         continente = ifelse(continente == "Other", "Asia", continente))
+
+#casos_internacionales <- filter(casos_internacionales, fecha > as.Date("2020/03/01"))
+
+casos_internacionales_por_fecha <- casos_internacionales %>%
+  drop_na() %>%
+  group_by(fecha) %>%
+  summarise(total_casos=sum(casos), poblacion_total=sum(log(poblacion)))
+
+y <- casos_internacionales_por_fecha$total_casos
+x <- as.integer(casos_internacionales_por_fecha$fecha) + casos_internacionales_por_fecha$poblacion_total
+
+casos_fecha <- lm(y~x+I(x^2), data=casos_internacionales_por_fecha)
+summary(casos_fecha)
+
+
+dates <- as.integer(casos_internacionales_por_fecha$fecha)
+as.Date(x, origin)
+
+p <- casos_fecha %>%
+  ggplot(aes(x, y)) +
+  geom_point() +
+  stat_smooth(method="lm", formula="y~(x+poly(x,2))") +
+  labs(y="total de casos", x = "fecha codificada + poblacion total")
+p
