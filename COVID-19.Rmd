@@ -1,7 +1,7 @@
 ---
 title: "COVID-19"
 author: "David Florido Ruiz"
-date: "05/06/2020"
+date: "18/05/2020"
 output: html_document
 ---
 
@@ -22,7 +22,7 @@ library(gridExtra)  #Agrupar gráficas
 
 Cargamos el dataset con los datos y observamos sus datos
 ```{r}
-casos_internacionales <- read.csv("./datasets/worldwide_cases")
+casos_internacionales <- read.csv("./datasets/worldwide_cases2")
 str(casos_internacionales)
 ```
 
@@ -59,20 +59,36 @@ plot <- ggplot(casos_internacionales, aes(x=fecha, y=casos), color=vore) +
   coord_cartesian() +
   geom_col() +
   theme_linedraw() + 
-  labs(x = "fecha", y = "número de casos") +
+  labs(x = "fecha", y = "número de casos diarios") +
   scale_x_date(labels = date_format("%d-%B"));
 plot
+
+plot2 <- ggplot(casos_internacionales, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col() +
+  theme_linedraw() + 
+  labs(x = "fecha", y = "número de muertes diarias") +
+  scale_x_date(labels = date_format("%d-%B"));
+plot2
 ```
 
 
 No parece haber una cantidad interesante antes de mediados de enero así que filtramos para mayor claridad
 ```{r}
 casos_internacionales <- filter(casos_internacionales, fecha > as.Date("2020/01/15"))
-plot2 <- ggplot(casos_internacionales, aes(x=fecha, y=casos), color=vore) +
+plot <- ggplot(casos_internacionales, aes(x=fecha, y=casos), color=vore) +
   coord_cartesian() +
   geom_col() +
   theme_linedraw() + 
-  labs(x = "fecha", y = "número de casos") +
+  labs(x = "fecha", y = "número de casos diarios") +
+  scale_x_date(labels = date_format("%d-%B"));
+plot
+
+plot2 <- ggplot(casos_internacionales, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col() +
+  theme_linedraw() + 
+  labs(x = "fecha", y = "número de muertes diarias") +
   scale_x_date(labels = date_format("%d-%B"));
 plot2
 ```
@@ -145,7 +161,72 @@ pie <- ggplot(casos_internacionales, aes(x="", y=casos, fill=continente))+
 
 
 grid.arrange(pAf, pAm, pAs, pEu, pOc, pie, nrow=3, ncol = 2)
+
+
+pAf <- ggplot(casos_Africa, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col(fill = "#F8766D") +
+  theme_linedraw() + 
+  scale_x_date(labels = date_format("%d-%B")) + 
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank());
+
+
+pAm <- ggplot(casos_America, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col(fill = "#A3A500") +
+  theme_linedraw() + 
+  scale_x_date(labels = date_format("%d-%B")) + 
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank());
+
+
+pAs <- ggplot(casos_Asia, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col(fill = "#00BF7D") +
+  theme_linedraw() + 
+  scale_x_date(labels = date_format("%d-%B")) + 
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank());
+
+
+pEu <- ggplot(casos_Europa, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col(fill = "#00B0F6") +
+  theme_linedraw() + 
+  scale_x_date(labels = date_format("%d-%B")) + 
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank());
+
+
+pOc <- ggplot(casos_Oceania, aes(x=fecha, y=muertes), color=vore) +
+  coord_cartesian() +
+  geom_col(fill = "#E76BF3") +
+  theme_linedraw() + 
+  scale_x_date(labels = date_format("%d-%B")) + 
+  theme(axis.title.x=element_blank(),
+        axis.title.y=element_blank());
+
+
+pie <- ggplot(casos_internacionales, aes(x="", y=muertes, fill=continente))+
+  geom_bar(width = 1, stat = "identity") +
+  labs(y = "total de muertes") +
+  theme(
+    axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.title.y=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()) + 
+  coord_polar("y");
+
+
+grid.arrange(pAf, pAm, pAs, pEu, pOc, pie, nrow=3, ncol = 2)
 ```
+
+```{r eval=FALSE}
+"El número de casos detectados de COVID-19 internacionalmente ha seguido en aumento sin embargo, si miramos los datos por continentes podemos observar que tanto Europa como Oceanía han conseguido disminuir el impacto de la enfermedad, siendo Asia y América los continentes que peor evolución han llevado, llegando este último a acercarse a los 120,000 casos diarios en los últimos meses. Por otro lado el número de muertes diarias vuelve a presentar unos resultados optimistas para Europa y Oceanía, donde se percibe claramente una disminución en el número de casos, el resto de paísen han empeorado o se han mantenido en este aspecto."
+```
+
 
 
 ## Formal Context Analysis
@@ -153,7 +234,7 @@ grid.arrange(pAf, pAm, pAs, pEu, pOc, pie, nrow=3, ncol = 2)
 Cargamos la librería y dataset a usar
 ```{r message=FALSE}
 library(arules)
-casos_sintomas <- read.csv("./datasets/COVID19_line_list_data.csv")
+casos_sintomas <- read.csv("./datasets/COVID19_line_list_data2.csv")
 ```
 
 
@@ -202,7 +283,7 @@ inspect(reglas.pruned)
 
 Cargamos los datos y los preparamos para aplicar regresión
 ```{r}
-casos_internacionales <- read.csv("./datasets/worldwide_cases")
+casos_internacionales <- read.csv("./datasets/worldwide_cases2")
 
 casos_internacionales <- casos_internacionales %>% 
   select(-c(day, month, year, geoId, countryterritoryCode))
@@ -233,7 +314,7 @@ y <- casos_internacionales_por_fecha$total_casos
 x <- as.integer(casos_internacionales_por_fecha$fecha) + casos_internacionales_por_fecha$poblacion_total
 #codificamos las fechas como números para poder usarlos para la regresión
 
-casos_fecha <- lm(y~x+I(x^2), data=casos_internacionales_por_fecha)
+casos_fecha <- lm(y~x+I(x^2)++I(x^3), data=casos_internacionales_por_fecha)
 summary(casos_fecha)
 
 dates <- as.integer(casos_internacionales_por_fecha$fecha)
@@ -241,11 +322,11 @@ dates <- as.integer(casos_internacionales_por_fecha$fecha)
 p <- casos_fecha %>%
   ggplot(aes(x, y)) +
   geom_point() +
-  stat_smooth(method="lm", formula="y~(x+poly(x,2))") +
+  stat_smooth(method="lm", formula="y~(x+poly(x,2)+poly(x,3))") +
   labs(y="total de casos", x = "fecha codificada + poblacion total")
 p
 ```
 
 ```{r eval=FALSE}
-"La regresión se ha aplicado tomando el total de población mundial en una fecha dada para calcular el total de casos de COVID-19. El ajuste realizado utiliza un polinomio de grado 2 y los resultados son bastante buenos como se puede apreciar tanto observando los parámetros como directamente observando la gráfica. Ya que los números son bastante elevados es cierto que un error ligero se traduce en varios miles de casos de diferencia, pero ya que los datos más recientes se encuentran entre los 75,000 y los 100,000 el error es tolerable, sobretodo teniendo en cuenta que la incertidumbre en el último tramo es menos dada la concentración de los datos. Respecto a la utilidad del análisis, no la considero especialmente representativa para previsiones futuras ya que los datos usados recogen la fase más dura del número de casos y apenas roza la etapa tras tomarse medidas serias en la mayoría de países, no teniendo datos de la desescalada, por ésto su uso en un momento de tiempo anterior podría haber sido la puesta en el caso peor, ya que los datos que daría éste ajuste en teoría serían superiores a los reales una vez iniciada la desescalada."
+"La regresión se ha aplicado tomando el total de población mundial en una fecha dada para calcular el total de casos de COVID-19. El ajuste realizado utiliza un polinomio de grado 3 y los resultados son bastante buenos como se puede apreciar tanto observando los parámetros como directamente observando la gráfica. Ya que los números son bastante elevados es cierto que un error ligero se traduce en varios miles de casos de diferencia, pero ya que los datos más recientes se encuentran por encima de los 100,000 el error es tolerable. Un factor externo que afecta a la regresión es que considera una población mundial más o menos estable, pero se intenta reducir su impacto al usar la operación logaritmo sobre la población."
 ```
